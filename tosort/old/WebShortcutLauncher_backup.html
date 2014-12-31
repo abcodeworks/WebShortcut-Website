@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- The contact and back icons were downloaded from iconfinder.
+     They are from the "Pictype Free Vector Icons" set created by Timothy Miller under
+	 the Creative Commons (Attribution-Share Alike 3.0 Unported) license.
+	 The URL is https://www.iconfinder.com/iconsets/pictype-free-vector-icons
+-->
+ 
+<html>
+  <head>
+    <title>Andre Beckus Main Page</title>
+  </head>
+
+  <body>
+    <form id="file-form" action="http://abcodeworks.com/cgi/parseshortcut.cgi" enctype="multipart/form-data" method="POST">
+      <input type="file" id="file-select" name="shortcuts[]" multiple="multiple"/>
+      <button type="submit" id="upload-button" onclick="onSubmit()">Upload</button>
+    </form>
+	
+	<script>
+      function onSubmit() {
+	    alert("hello world");
+        document.getElementById("frm1").submit();
+      }
+    </script>
+  </body>
+
+</html> 
