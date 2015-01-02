@@ -8,9 +8,13 @@
 <html>
   <head>
     <title>Web Shortcut Launcher</title>
-	<link rel="stylesheet" type="text/css" href="webshortcut.css">
-	<!--link rel="icon" href="favicon.ico" type="image/x-icon"-->
-	<link rel="icon" href="favicon144.png" type="image/png">
+
+	  <link rel="stylesheet" type="text/css" href="webshortcut.css">
+
+	  <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon192.png" sizes="192x192">
+
 	<style>
 		#filedrag
 		{
@@ -49,10 +53,13 @@
 	<header>
 		<h1>Web Shortcut Tools</h1>
 		<nav>
+		  <h3>
 			<ul>
+			  <li>Overview</li>
 				<li>Launcher</li>
 				<li>Converter</li>
 			</ul>
+			</h3>
 		</nav>
 	</header>
 
@@ -190,7 +197,7 @@
 
 			shortcuts = response.getElementsByTagName("shortcut");
 		        var txt = "<h3>Results:</h3><table border=\"1\">";
-			txt = txt + "<tr><td>File Name</td><td>Result</td></tr>"
+			txt = txt + "<tr><th>File Name</th><th>Result</th></tr>"
                         for (i=0;i<shortcuts.length;i++) {
 				txt = txt + "<tr>";
 				var filename = shortcuts[i].getElementsByTagName("filename");
