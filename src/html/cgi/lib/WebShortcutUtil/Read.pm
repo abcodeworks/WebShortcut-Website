@@ -8,8 +8,6 @@ use warnings;
 
 our $VERSION = '0.20';
 
-use feature 'switch';
-
 use Carp;
 use File::Basename;
 use Encode qw/decode/;
@@ -354,9 +352,10 @@ sub read_desktop_shortcut_handle {
     	} else {
     		my ($key, $locale, $value) = _get_key_value_pair($next_line);
     		if(defined($key)) {
-    			given ($key) {
-    				when ("Type") { $type = $value; }
-    	            when ("URL") { $url = $value; }
+    			if($key eq "Type") {
+    				$type = $value;
+    			} elsif($key eq "URL") {
+    				$url = $value;
     			}
     		} else {
     			warn "Warning: Found a line in the file with no valid key/value pair: ${next_line}";
@@ -414,13 +413,11 @@ sub read_url_shortcut_handle {
         } else {
             my ($key, $locale, $value) = _get_key_value_pair($next_line);
             if(defined($key)) {
-                given ($key) {
-                    when ("URL") {
-                    	if($curr_section == INTERNET_SHORTCUT_SECTION) {
-                    	   $parsed_url = $value;
-                    	} elsif($curr_section == INTERNET_SHORTCUT_W_SECTION) {
-                           $parsed_urlw = decode("UTF-7", $value);
-                    	}
+            	if($key eq "URL") {
+                    if($curr_section == INTERNET_SHORTCUT_SECTION) {
+                       $parsed_url = $value;
+                    } elsif($curr_section == INTERNET_SHORTCUT_W_SECTION) {
+                       $parsed_urlw = decode("UTF-7", $value);
                     }
                 }
             } else {
