@@ -19,36 +19,16 @@
 	  <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16">
     <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
     <link rel="icon" type="image/png" href="favicon192.png" sizes="192x192">
-
-  	<style>
-  		#filedrag
-  		{
-  			display: none;
-  			font-weight: bold;
-  			text-align: center;
-  			padding: 1em 0;
-  			margin: 1em 0;
-  			color: #555;
-  			border: 2px dashed #555;
-  			border-radius: 7px;
-  			cursor: default;
-  		}
-  
-  		#filedrag.hover
-  		{
-  			color: #f00;
-  			border-color: #f00;
-  			border-style: solid;
-  			box-shadow: inset 0 3px 4px #888;
-  		}
-  		
-  		fieldset
-  		{
-  		  border: 0;
-  		}
-  	</style>
+    
+    <style>
+      #filedrag {
+        width: 50%;
+        height: 200px;
+      }
+    </style>
 
 	  <script src="jquery.js"></script>
+	  <script src="server.js"></script>
   </head>
 
   <body>
@@ -57,17 +37,17 @@
   		<nav>
   		  <h3>
   			<ul>
-  			  <li>Overview</li>
+  			  <li><a href="index.html">Overview</a></li>
   				<li>Launcher</li>
-  				<li>Converter</li>
+  				<li><a href="Converter.html">Converter</a></li>
   			</ul>
   			</h3>
   		</nav>
   	</header>
   
-  	<form id="upload" action="http://abcodeworks.com/cgi/parseshortcut.cgi" method="POST" enctype="multipart/form-data">
+  	<form id="upload" action="../cgi/parseshortcut.cgi" method="POST" enctype="multipart/form-data">
   		<fieldset>
-    		<input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="300000" />
+    		<input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
   
   			<label for="fileselect">Files to upload:</label>
   			<input type="file" id="fileselect" name="shortcuts[]" multiple="multiple" />
@@ -86,7 +66,7 @@
   		// output information
   		function Output(msg) {
   			var m = $("#messages")[0];
-  			m.innerHTML = msg + m.innerHTML;
+  			m.innerHTML = msg;
   		}
   		
   		function GetFileExtension(filename) {
@@ -171,55 +151,56 @@
   			  return;
   			} 
   			
-  			// Open the connection.
-  			xhr.open('POST', 'http://abcodeworks.com/cgi/parseshortcut.cgi', true);
-  			
-  			// Set up a handler for when the request finishes.
-  			xhr.onload = function () {
-  			  if (xhr.status === 200) {
-  				  processResponse(xhr);
-  			  } else {
-  				  alert('An error occurred!');
-  			  }
-  			};
-  			
-  			// Send the Data.
-  			xhr.send(formData);
+        $.ajax({
+          url: GetParseShortcutUrl(),
+          data: formData,
+          cache: false,
+          contentType: false,
+          processData: false,
+          type: 'POST',
+          success: function(data) {
+            processResponse(data);
+          },
+          error: function(data) {
+            alert('An error occurred!');
+          }
+        });  			
   		}
   
   		function htmlEncode(value) {
   		    return $('<div/>').text(value).html();
   		}
   
-  		function processResponse(xhr) {
-  			var response = xhr.responseXML;
-  
-  			shortcuts = response.getElementsByTagName("shortcut");
-  		        var txt = "<h3>Results:</h3><table border=\"1\">";
-  			txt = txt + "<thead><tr><th>File Name</th><th>Result</th></tr></thead><tbody>"
-                          for (i=0;i<shortcuts.length;i++) {
-  				txt = txt + "<tr>";
-  				var filename = shortcuts[i].getElementsByTagName("filename");
-  				txt = txt + "<td>" + htmlEncode(filename[0].childNodes[0].nodeValue) + "</td>";
-  				var errormsg = shortcuts[i].getElementsByTagName("error");
-  				if(errormsg.length > 0) {
-  					txt = txt + "<td>" + htmlEncode(errormsg[0].childNodes[0].nodeValue) + "</td>";
+  		function processResponse(response) {
+        var tablebody = ""
+        
+        $(response).find("shortcut").each(function() {
+          var shortcut = $(this);
+        
+  				tablebody = tablebody + "<tr>";
+  				var filename = shortcut.find("filename");
+  				tablebody = tablebody + "<td>" + htmlEncode(filename.text()) + "</td>";
+  				var errormsg = shortcut.find("error");
+  				if(errormsg.length) {
+  					tablebody = tablebody + "<td>" + htmlEncode(errormsg.text()) + "</td>";
   				} else {
-  					var urlElement = shortcuts[i].getElementsByTagName("url");
-  					var url = urlElement[0].childNodes[0].nodeValue;
-  					txt = txt + "<td><a href=\"" + htmlEncode(url) + "\">" + htmlEncode(url) + "</a></td>";
+  					var urlElement = shortcut.find("url");
+  					var url = urlElement.text();
+  					tablebody = tablebody + "<td><a href=\"" + htmlEncode(url) + "\">" + htmlEncode(url) + "</a></td>";
   					window.open(url);
   				}
-  				txt = txt + "</tr>";
-  			}
-  			txt = txt + "</tbody></table>";
+  				tablebody = tablebody + "</tr>";
+  			});
   
-        Output(txt);
+        Output(
+          "<h3>Results:</h3><table border=\"1\">" +
+          "<thead><tr><th>File Name</th><th>Result</th></tr></thead>" +
+          "<tbody>" +
+          tablebody +
+          "</tbody>" +
+          "</table>");
   		}
-  
-  
-  
-  
+
   	</script>
 
   </body>

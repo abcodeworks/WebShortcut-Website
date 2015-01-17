@@ -9,3 +9,6 @@ To make PERL executable:
 chmod 705 file
 OR allfiles in current directory
 chmod -R 705 .
+
+Close all Chrome windows and run:
+google-chrome --disable-web-security
