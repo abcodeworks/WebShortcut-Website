@@ -15,10 +15,6 @@ nav ul li {
 
 #filedrag {
 	display: none;
-	font-weight: bold;
-	line-height: 200px;
-	text-align: center;
-	vertical-align: middle;
 	padding: 1em 0;
 	margin: 1em 0;
 	color: #555;
@@ -32,8 +28,4 @@ nav ul li {
 	border-color: #f00;
 	border-style: solid;
 	box-shadow: inset 0 3px 4px #888;
-}
-
-fieldset {
-  border: 0;
 }

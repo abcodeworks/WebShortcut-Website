@@ -22,12 +22,20 @@
     
     <style>
       #filedrag {
+      	font-weight: bold;
+	      text-align: center;
+	      vertical-align: middle;
+        line-height: 200px;
         width: 50%;
         height: 200px;
+      }
+      fieldset {
+        border: 0;
       }
     </style>
 
 	  <script src="jquery.js"></script>
+	  <script src="webshortcut.js"></script>
 	  <script src="server.js"></script>
   </head>
 
@@ -69,14 +77,6 @@
   			m.innerHTML = msg;
   		}
   		
-  		function GetFileExtension(filename) {
-  		  var a = filename.split(".");
-        if( a.length === 1 || ( a[0] === "" && a.length === 2 ) ) {
-          return "";
-        }
-        return a.pop();
-  		}
-  	
   		// call initialization file
       if (window.File && window.FileList && window.FileReader) {
         Init();
@@ -114,58 +114,15 @@
   
   			// cancel event and hover styling
   			FileDragHover(e);
-  
-  			// fetch FileList object
-  			var files = e.target.files || e.dataTransfer.files;
-  
-  			var xhr = new XMLHttpRequest();
-  			
-  			// Create a new FormData object.
-  			var formData = new FormData();
-  			
-  			// Loop through each of the selected files.
-  			var count = 0, skipCount = 0;
-  			for (var i = 0; i < files.length; i++) {
-  			  var file = files[i];
-  
-  			  // Check the file type.
-  			  var fileExtension = GetFileExtension(file.name);
-  			  if (fileExtension != 'url' &&
-  			      fileExtension != 'website' &&
-  			      fileExtension != 'desktop' &&
-  			      fileExtension != 'webloc') {
-  			    skipCount++;
-  			    continue;
-  			  }
-  
-  			  // Add the file to the request.
-  			  formData.append('shortcuts[]', file, file.name);
-  			  count++;
-  			}
-			
-        if(skipCount > 0) {
-          window.alert("Some files did not have a valid extension and are being ignored");
-        }
- 
-  			if(count == 0) {
-  			  return;
-  			} 
-  			
-        $.ajax({
-          url: GetParseShortcutUrl(),
-          data: formData,
-          cache: false,
-          contentType: false,
-          processData: false,
-          type: 'POST',
-          success: function(data) {
-            processResponse(data);
-          },
-          error: function(data) {
+
+        ProcessDraggedShortcutFiles(
+          e,
+          processResponse,
+          function(data) {
             alert('An error occurred!');
           }
-        });  			
-  		}
+        );
+      }
   
   		function htmlEncode(value) {
   		    return $('<div/>').text(value).html();
