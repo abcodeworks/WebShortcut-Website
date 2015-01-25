@@ -12,3 +12,5 @@ chmod -R 705 .
 
 Close all Chrome windows and run:
 google-chrome --disable-web-security
+
+"C:\Program Files (x86)\Google\Chrome\Application\chrome" --disable-web-security
