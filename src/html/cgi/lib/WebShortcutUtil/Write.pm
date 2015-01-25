@@ -22,6 +22,10 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 	write_url_shortcut_file
 	write_webloc_binary_shortcut_file
 	write_webloc_xml_shortcut_file
+    write_desktop_shortcut_handle
+    write_url_shortcut_handle
+    write_webloc_binary_shortcut_handle
+    write_webloc_xml_shortcut_handle
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -220,12 +224,7 @@ sub write_desktop_shortcut_file {
     _check_file_already_exists ( $filename );
     open (my $file, ">:encoding(UTF-8)", $filename) or die "Error opening file \"${filename}\": $!";
     
-    # Assume all the writes will be done in UTF-8.
-    print $file "[Desktop Entry]\n";
-    print $file "Encoding=UTF-8\n";
-    print $file "Name=${name}\n";
-    print $file "Type=Link\n";
-    print $file "URL=${url}\n";
+    write_desktop_shortcut_handle($file, $name, $url);
     
     close ($file);
     
@@ -238,42 +237,21 @@ sub write_url_shortcut_file {
     _check_file_already_exists ( $filename );
     open (my $file, ">", $filename) or die "Error opening file \"${filename}\": $!";
     
-    if(is_utf8($url)) {
-        print $file "[InternetShortcut.W]\r\n";
-        my $url_utf7 = encode("UTF-7", $url);
-        print $file "URL=${url_utf7}\r\n";    	
-    } else {
-        print $file "[InternetShortcut]\r\n";
-        print $file "URL=${url}\r\n";
-    }
+    write_url_shortcut_handle($file, $name, $url);
     
     close ($file);
     
     return 1;
 }
 
-# TODO: Fix this eval to not use an expression.  This causes it to fail perlcritic.
-sub _try_load_module_for_webloc {
-	my ( $module, $list ) = @_;
-
-    eval ( "use ${module} ${list}; 1" ) or
-        die "Could not load ${module} module.  This module is required in order to read/write webloc files.  Error: $@";
-}
-
 sub write_webloc_binary_shortcut_file {
     my ( $filename, $name, $url ) = @_;
  
-    _try_load_module_for_webloc ( "Mac::PropertyList", "qw(:all)" );
-    _try_load_module_for_webloc ( "Mac::PropertyList::WriteBinary", "" );
-  
     _check_file_already_exists ( $filename );
-
-    my $data = new Mac::PropertyList::dict({ "URL" => $url });
-    my $buf = Mac::PropertyList::WriteBinary::as_string($data);
     
     open (my $file, ">:encoding(UTF-8)", $filename) or die "Error opening file \"${filename}\": $!";
     binmode $file;
-    print $file $buf;
+    write_webloc_binary_shortcut_handle($file, $name, $url);
     close ($file);
     
     return 1;
@@ -282,15 +260,79 @@ sub write_webloc_binary_shortcut_file {
 sub write_webloc_xml_shortcut_file {
     my ( $filename, $name, $url ) = @_;
  
-    _try_load_module_for_webloc ( "Mac::PropertyList", "qw(:all)" );
- 
     _check_file_already_exists ( $filename );
     
-    my $str = create_from_hash({ "URL" => $url });
-    
     open (my $file, ">:encoding(UTF-8)", $filename) or die "Error opening file \"${filename}\": $!";
-    print $file $str;
+    write_webloc_xml_shortcut_handle($file, $name, $url);
     close ($file);
+    
+    return 1;
+}
+
+
+
+sub write_desktop_shortcut_handle {
+    my ( $handle, $name, $url ) = @_;
+ 
+    # Assume all the writes will be done in UTF-8.
+    print $handle "[Desktop Entry]\n";
+    print $handle "Encoding=UTF-8\n";
+    print $handle "Name=${name}\n";
+    print $handle "Type=Link\n";
+    print $handle "URL=${url}\n";
+    
+    close ($handle);
+    
+    return 1;
+}
+
+sub write_url_shortcut_handle {
+    my ( $handle, $name, $url ) = @_;
+ 
+    if(is_utf8($url)) {
+        print $handle "[InternetShortcut.W]\r\n";
+        my $url_utf7 = encode("UTF-7", $url);
+        print $handle "URL=${url_utf7}\r\n";      
+    } else {
+        print $handle "[InternetShortcut]\r\n";
+        print $handle "URL=${url}\r\n";
+    }
+    
+    close ($handle);
+    
+    return 1;
+}
+
+# TODO: Fix this eval to not use an expression.  This causes it to fail perlcritic.
+sub _try_load_module_for_webloc {
+    my ( $module, $list ) = @_;
+
+    eval ( "use ${module} ${list}; 1" ) or
+        die "Could not load ${module} module.  This module is required in order to read/write webloc files.  Error: $@";
+}
+
+sub write_webloc_binary_shortcut_handle {
+    my ( $handle, $name, $url ) = @_;
+ 
+    _try_load_module_for_webloc ( "Mac::PropertyList", "qw(:all)" );
+    _try_load_module_for_webloc ( "Mac::PropertyList::WriteBinary", "" );
+
+    my $data = new Mac::PropertyList::dict({ "URL" => $url });
+    my $buf = Mac::PropertyList::WriteBinary::as_string($data);
+    print $handle $buf;
+    close ($handle);
+    
+    return 1;
+}
+
+sub write_webloc_xml_shortcut_handle {
+    my ( $handle, $name, $url ) = @_;
+ 
+    _try_load_module_for_webloc ( "Mac::PropertyList", "qw(:all)" );
+    
+    my $str = create_from_hash({ "URL" => $url });
+    print $handle $str;
+    close ($handle);
     
     return 1;
 }
