@@ -65,6 +65,10 @@
         </div>
   		</fieldset>
   	</form>
+  	
+  	<div id="options">
+  	  <input id="nolaunch" type="checkbox" name="nolaunch">Do not launch shortcut (only show URL)</input>
+    </div>
   
   	<div id="filedrag">or drop files here</div>
   
@@ -119,9 +123,7 @@
           e,
           processResponse,
           function(xhr, ajaxOptions, thrownError) {
-            alert('An error occurred!');
-                    alert(xhr.status);
-        alert(thrownError);
+            alert('An error occurred submitting the shortcuts to the server: status=' + xhr.status + ' error=' + thrownError);
           }
         );
       }
@@ -146,7 +148,9 @@
   					var urlElement = shortcut.find("url");
   					var url = urlElement.text();
   					tablebody = tablebody + "<td><a href=\"" + htmlEncode(url) + "\">" + htmlEncode(url) + "</a></td>";
-  					window.open(url);
+  					if(!$('#nolaunch').prop('checked')) {
+  					  window.open(url);
+  					}
   				}
   				tablebody = tablebody + "</tr>";
   			});
