@@ -118,8 +118,10 @@
         ProcessDraggedShortcutFiles(
           e,
           processResponse,
-          function(data) {
+          function(xhr, ajaxOptions, thrownError) {
             alert('An error occurred!');
+                    alert(xhr.status);
+        alert(thrownError);
           }
         );
       }

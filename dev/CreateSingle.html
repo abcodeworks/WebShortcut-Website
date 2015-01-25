@@ -13,24 +13,6 @@
       fieldset {
         border: 0;
       }
-    //    html, body {
-    //        min-height:100%;
-    //    }
-     // #mainarea
-//{
-  //  display:table;
-  //  height:100%;
-  ///  width:100%;
-//}
-//#options
-//{
-    //display:table-row;
-//}
-//#filedrag
-//{
-//    display:table-row;
-    //height:100%;  
-//}
     </style>
     
     <script src="jquery.js"></script>
@@ -51,22 +33,12 @@
   			</h3>
   		</nav>
   	</header>
-    <div id="mainarea">
-    <div id="options">
+
   <select form="convert">
     <option value="url">Windows (.url)</option>
     <option value="desktop">Linux (.desktop)</option>
     <option value="webloc">Apple (.webloc)</option>
   </select>
-            <form id="convert" action="http://abcodeworks.com/cgi/convertshortcut.cgi" method="POST">
-  		<fieldset>
-            <input id="archive" type="hidden" name="archive">
-    		<input id="xmldata" type="hidden" name="xmldata">
-  		</fieldset>
-  	</form>
-        </div>
-
-        <button onclick="submitall()" type="button">Convert All Files</button>
 
     <!-- Need to fix the drag.  See:
          http://stackoverflow.com/questions/7110353/html5-dragleave-fired-when-hovering-a-child-element
@@ -83,13 +55,15 @@
       </table>
     </div>
     
-
-        </div>
+    <form id="convert" action="http://abcodeworks.com/cgi/convertshortcut.cgi" method="POST">
+  		<fieldset>
+    		<input id="xmldata" type="hidden" name="xmldata">
+        <button type="submit">Convert Files</button>
+  		</fieldset>
+  	</form>
 
   	<script>
-  	    var nextRowID = 1;
-  	    var xmlfilelist = document.implementation.createDocument(null, "shortcuts", null);
-  	    var xmlfilelistShortcuts = xmlfilelist.documentElement;
+      var nextRowID = 1;  	
   	
   	  // call initialization file
       if (window.File && window.FileList && window.FileReader) {
@@ -107,7 +81,11 @@
   				filedrag.addEventListener("drop", FileSelectHandler, false);
   				filedrag.style.display = "block";
   			}
-     
+  			
+  			$( "#convert" ).submit(function( event ) {
+          $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?><note><to>Tove</to></note>");
+        });
+        
   		}
   		
   		// file drag hover
@@ -141,26 +119,15 @@
         $(response).find("shortcut").each(function() {
           var shortcut = $(this);
           
-          shortcutElement = shortcut[0];
-
-
-          thisRowID = nextRowID++;
-
           var filename = shortcut.find("filename");
           var errormsg = shortcut.find("error");
-
-          if(!errormsg.length) {
-              var clonedNode = shortcutElement.cloneNode(true);
-              clonedNode.setAttribute("id", thisRowID);
-              xmlfilelistShortcuts.appendChild(clonedNode);
-          }
           
           var errorflag = 0;
           if(errormsg.length) {
             errorflag = 1;
           }          
-            
-          tablebody = tablebody + "<tr error=\"" + errorflag + "\" id=\"" + thisRowID + "\">";
+          
+  				tablebody = tablebody + "<tr error=\"" + errorflag + "\" id=\"" + nextRowID + "\">";
   				tablebody = tablebody + "<td>" + htmlEncode(filename.text()) + "</td>";
   				if(errormsg.length) {
   					tablebody = tablebody + "<td>" + htmlEncode(errormsg.text()) + "</td>";
@@ -177,81 +144,26 @@
   				}
   				tablebody = tablebody + "<td><a onclick=\"deleteRow(this)\" href=\"#\">Remove</a></td>";
   				tablebody = tablebody + "</tr>";
+  				
+  				nextRowID++;
   			});
           
         var m = $("#filetablebody")[0];
   			m.innerHTML = m.innerHTML + tablebody;
   		}
   		
-  		function GetShortcutByID(id) {
-
-  		    var element = $(xmlfilelistShortcuts).find("shortcut[id=" + id + "]");
-  		    if(element) {
-  		        return element[0];
-  		    } else {
-  		        return undefined;
-  		    }
-  		}
-
-  		function GetRowID(row) {
-  		    return row.getAttribute("id");  
-  		}
-
   		function downloadRow(r) {
         var row = r.parentNode.parentNode;
-        //var i = row.rowIndex;
-        var rowid = GetRowID(row);  
+        var i = row.rowIndex;
         
-        var xmlfile = document.implementation.createDocument(null, "shortcuts", null);
-        var xmlfileShortcuts = xmlfile.documentElement;
-
-        var shortcutElement = GetShortcutByID(rowid);
-        var clonedNode = shortcutElement.cloneNode(true);
-        xmlfileShortcuts.appendChild(clonedNode);
-
-        var xmlstr;
-        if (typeof xmlfile.documentElement !== 'undefined') {
-            xmlstr = new XMLSerializer().serializeToString(xmlfile.documentElement);
-        } else {
-            xmlstr = new XMLSerializer().serializeToString(xmlfile);
-        }
-
-        $( "#archive" ).val("none");
-        $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
-
-        $( "#convert" ).submit();
-        //alert(i + " " + rowid);
+        var rowid = row.getAttribute("id");         
+        
+        alert(i + " " + rowid);
   		}
   		
   		function deleteRow(r) {
-  		    var row = r.parentNode.parentNode;
-  		    var i = row.rowIndex;
-  		    var rowid = GetRowID(row);
-  		    document.getElementById("shortcuttable").deleteRow(i);
-
-  		    var shortcutElement = GetShortcutByID(rowid);
-  		    if(shortcutElement) {
-  		        xmlfilelistShortcuts.removeChild(shortcutElement);
-  		    }
-  		}
-
-  		function submitall() {
-  		    //event.preventDefault();
-  		    //$( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?><note><to>Tove</to></note>");
-  		    //var xmlstr = new XMLSerializer().serializeToString(xmlfilelist);
-  		    // See http://stackoverflow.com/questions/8474808/how-to-remove-the-xml-declaration-from-opera-when-using-xmlserializer
-
-  		    var xmlstr;
-  		    if (typeof xmlfilelist.documentElement !== 'undefined') {
-  		        xmlstr = new XMLSerializer().serializeToString(xmlfilelist.documentElement);
-  		    } else {
-  		        xmlstr = new XMLSerializer().serializeToString(xmlfilelist);
-  		    }
-
-  		    $( "#archive" ).val("zip");
-  		    $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
-
-  		    $( "#convert" ).submit();
+        var i = r.parentNode.parentNode.rowIndex;
+        document.getElementById("shortcuttable").deleteRow(i);
   		}
   	</script>
   </body>

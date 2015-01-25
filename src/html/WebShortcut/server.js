@@ -1,7 +1,7 @@
 function GetParseShortcutUrl() {
-  return '../cgi/parseshortcut.cgi';
+  return 'http://abcodeworks.com/cgi/parseshortcut.cgi';
 }
 
 function GetConvertShortcutUrl() {
-  return '../cgi/convertshortcut.cgi';
+  return 'http://abcodeworks.com/cgi/convertshortcut.cgi';
 }
