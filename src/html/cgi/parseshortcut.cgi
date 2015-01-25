@@ -25,16 +25,12 @@ use WebShortcutUtil::Read qw(
 # no message will be printed if we do not print this line first???
 print STDERR "parseshortcut.cgi starting...\n";
 
-eval {
 # Start printing the output xml
 print "Content-type: text/xml\n\n";
-
 
 # Set upper limit on file size
 $upload_limit_kb = 100;
 $CGI::POST_MAX = 1024 * $upload_limit_kb;
-
-#die "hello&";
 
 my $query = CGI->new();
 
@@ -69,9 +65,3 @@ foreach my $shortcut_file (@shortcut_files) {
 
 $writer->endTag("shortcuts");
 $writer->end();
-
-};
-if($@) {
-  print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-  print "<error>$@</error>";
-}
