@@ -14,25 +14,19 @@ use CGI qw/:all/;
 # this should be handled properly below, and the user should get an error message
 # for each file.
 
-use XML::Writer;
+#use XML::Writer;
 
-use WebShortcutUtil::Read qw(
-        get_handle_reader_for_file);
+#use WebShortcutUtil::Read qw(
+#        get_handle_reader_for_file);
 
 # Print a message to the error log.  It seems like if we die,
 # no message will be printed if we do not print this line first???
-print STDERR "parseshortcut.cgi starting...\n";
-
-# Set upper limit on file size
-$upload_limit_kb = 100;
-$CGI::POST_MAX = 1024 * $upload_limit_kb;
-
+print STDERR "convertshortcut.cgi starting...\n";
 
 # Start printing the output xml
 print "Content-type: text/xml\n\n";
 my $query = CGI->new();
 
-foreach $line ( <STDIN> ) {
-    chomp( $line );
-    print "$line\n";
-}
+my $xmldata = $query->param("xmldata");
+
+printf $xmldata;

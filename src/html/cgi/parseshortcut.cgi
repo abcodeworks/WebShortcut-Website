@@ -4,6 +4,8 @@
 
 use lib 'lib';
 
+use Encode;
+
 use CGI qw/:all/;
 
 # Note that we do not use CGI::Carp -
@@ -23,13 +25,17 @@ use WebShortcutUtil::Read qw(
 # no message will be printed if we do not print this line first???
 print STDERR "parseshortcut.cgi starting...\n";
 
+eval {
+# Start printing the output xml
+print "Content-type: text/xml\n\n";
+
+
 # Set upper limit on file size
 $upload_limit_kb = 100;
 $CGI::POST_MAX = 1024 * $upload_limit_kb;
 
+#die "hello&";
 
-# Start printing the output xml
-print "Content-type: text/xml\n\n";
 my $query = CGI->new();
 
 my $writer = XML::Writer->new(ENCODING => 'utf-8');
@@ -38,8 +44,10 @@ $writer->startTag("shortcuts");
 # Go through each uploaded file, parse, and output results
 my @shortcut_files = $query->upload("shortcuts[]");
 foreach my $shortcut_file (@shortcut_files) {
+  my $decoded_shortcut_file = decode(utf8=>$shortcut_file);
+
   $writer->startTag("shortcut");
-  $writer->dataElement("filename", $shortcut_file);
+  $writer->dataElement("filename", $decoded_shortcut_file);
 
   # Try parsing the file - if the routine dies, put the error
   # message into the xml.
@@ -61,3 +69,9 @@ foreach my $shortcut_file (@shortcut_files) {
 
 $writer->endTag("shortcuts");
 $writer->end();
+
+};
+if($@) {
+  print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+  print "<error>$@</error>";
+}
