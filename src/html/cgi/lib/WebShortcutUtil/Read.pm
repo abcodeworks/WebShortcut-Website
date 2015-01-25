@@ -18,6 +18,7 @@ our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
     shortcut_has_valid_extension
+    get_shortcut_name_from_filename
     read_shortcut_file
     read_shortcut_file_url
 	read_desktop_shortcut_file
@@ -90,7 +91,16 @@ my %_shortcut_handle_readers = (
 sub _fileparse_any_extension {
     my ( $filename ) = @_;
 
-    return fileparse($filename,  qr/\.[^.]*/);
+    my @pieces = split(m/[\\\/]/, $filename);
+    my $filename_without_path = pop(@pieces);
+    my ($name, $path, $suffix) = fileparse($filename_without_path,  qr/\.[^.]*/);
+    return ($name, $suffix);
+}
+
+sub get_shortcut_name_from_filename {
+	my ( $filename ) = @_;
+	my ($name, $suffix) = _fileparse_any_extension($filename);
+	return $name;
 }
 
 
@@ -104,7 +114,7 @@ its extension matches one of the supported types.
 sub shortcut_has_valid_extension {
 	my ( $filename ) = @_;
 	
-	my ($name, $path, $suffix) = _fileparse_any_extension($filename);
+	my ($name, $suffix) = _fileparse_any_extension($filename);
 	
 	return exists $_shortcut_file_readers{lc ($suffix)};
 }
@@ -138,7 +148,7 @@ must be installed in order to read ".webloc" files.
 sub read_shortcut_file {
     my ( $filename ) = @_;
 
-    my ($name, $path, $suffix) = _fileparse_any_extension($filename);
+    my ($name, $suffix) = _fileparse_any_extension($filename);
     
     if (!exists($_shortcut_file_readers{lc ($suffix)})) {
     	croak ( "Shortcut file does not have a recognized extension!" );
@@ -239,7 +249,7 @@ sub read_desktop_shortcut_file {
     
     close ($file);
     
-    my $name = _fileparse_any_extension($filename);
+    my $name = get_shortcut_name_from_filename($filename);
 
     return {
         "name", $name,
@@ -258,7 +268,7 @@ sub read_url_shortcut_file {
 
     close ($file);
     
-    my $name = _fileparse_any_extension($filename);
+    my $name = get_shortcut_name_from_filename($filename);
 
     return {
         "name", $name,
@@ -283,7 +293,7 @@ sub read_webloc_shortcut_file
     
     close ($file);
     
-    my $name = _fileparse_any_extension($filename);
+    my $name = get_shortcut_name_from_filename($filename);
 
     return {
         "name", $name,
@@ -487,7 +497,7 @@ sub get_handle_reader_for_file
 {
     my ( $filename ) = @_;
     
-    my ($name, $path, $suffix) = _fileparse_any_extension($filename);
+    my ($name, $suffix) = _fileparse_any_extension($filename);
     
     if (!exists($_shortcut_handle_readers{lc ($suffix)})) {
         croak ( "Shortcut file does not have a recognized extension!" );

@@ -19,7 +19,8 @@ use CGI qw/:all/;
 use XML::Writer;
 
 use WebShortcutUtil::Read qw(
-        get_handle_reader_for_file);
+        get_handle_reader_for_file
+        get_shortcut_name_from_filename);
 
 # Print a message to the error log.  It seems like if we die,
 # no message will be printed if we do not print this line first???
@@ -41,9 +42,11 @@ $writer->startTag("shortcuts");
 my @shortcut_files = $query->upload("shortcuts[]");
 foreach my $shortcut_file (@shortcut_files) {
   my $decoded_shortcut_file = decode(utf8=>$shortcut_file);
+  my $name = get_shortcut_name_from_filename($decoded_shortcut_file);
 
   $writer->startTag("shortcut");
   $writer->dataElement("filename", $decoded_shortcut_file);
+  $writer->dataElement("name", $name);
 
   # Try parsing the file - if the routine dies, put the error
   # message into the xml.
@@ -56,7 +59,6 @@ foreach my $shortcut_file (@shortcut_files) {
   if($@) {
     $writer->dataElement("error", $@);
   } else {
-    $writer->dataElement("name", $shortcut_file);
     $writer->dataElement("url", $url);
   }
 
