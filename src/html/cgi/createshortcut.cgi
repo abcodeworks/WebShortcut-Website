@@ -11,14 +11,6 @@ use Archive::Tar;
 
 use CGI qw/:all/;
 
-# Note that we do not use CGI::Carp -
-# I would like to create my own handler which outputs an error XML, but
-# I get an error that set_die_handler is not exported.
-# So, if there is an error in this main routine, the user will not be aware
-# what happened.  However, if there is an error parsing the shortcut, then
-# this should be handled properly below, and the user should get an error message
-# for each file.
-
 use XML::DOM;
 
 use HTML::Entities;
@@ -36,6 +28,7 @@ use WebShortcutUtil::Write qw(
         write_url_shortcut_file
         write_webloc_binary_shortcut_file);
 
+# Returns routines and info for the specified shortcut type
 sub get_shortcut_type_info {
   my ( $shortcut_type ) = @_;
  
@@ -60,7 +53,8 @@ sub get_shortcut_type_info {
   }
 }
 
-sub get_shortcut_info {
+# Gets the name and URL from the XML "shortcut" node.
+sub get_shortcut_node_info {
   my ($shortcut_node) = @_;
 
   my $name = $shortcut_node->getElementsByTagName ("name")->item(0)->getFirstChild->getNodeValue;
@@ -75,60 +69,70 @@ sub get_shortcut_info {
 eval {
 print STDERR "convertshortcut.cgi starting...\n";
 
+# Set upper limit on file size
+$upload_limit_kb = 100;
+$CGI::POST_MAX = 1024 * $upload_limit_kb;
+
 my $query = CGI->new();
 
+# Get the target shortcut type and associated info
 my $shortcut_type = $query->param("target_shortcut_type");
 my ($create_filename, $write_shortcut_file, $write_shortcut_handle, $mime_type) = get_shortcut_type_info($shortcut_type);
 
+# Get the XML message with the names and URLs
 my $xmldata = $query->param("xmldata");
 
+# Get the type of archive to output - options are "none" (just give the new shortcut file directly)
+# and "zip" (zip up the shortcuts).  If "none" is specified onyl the first shortcut in the XML will be
+# created (there is no way to download multiple files without archiving them).
 my $archive_type = $query->param("archive_type");
 
+# Start parsing the XML - get the root "shortcuts" node.
 my $parser = new XML::DOM::Parser;
 my $doc = $parser->parse($xmldata);
 my $shortcuts_node = $doc->getElementsByTagName ("shortcuts")->item(0);
 
 if($archive_type eq "none") {
-  #print "<?xml version=\"1.0\" encoding=\"UTF-8\"?><shortcuttype>$shortcut_type</shortcuttype>";
-# See http://www.perlmonks.org/?node_id=62809 for XML tips
-#    my $node = $nodes->item (0);
-#    print STDERR $nodes->getLength;
-    #my $shortcutnodes = $node->getChildNodes;
-#    print STDERR $shortcutnodes->getLength;
+    # Get the first "shortcut" node and extract its name and URL.
     my $shortcut_node = $shortcuts_node->getChildNodes->item (0);
-    my ($shortcut_name, $shortcut_url) = get_shortcut_info($shortcut_node);
-#    print STDERR "$name $url";
-   # my $node = $nodes->item (1);
-   # print STDERR $node->getValue . "\n";
+    my ($shortcut_name, $shortcut_url) = get_shortcut_node_info($shortcut_node);
 
-#    my $name = "name";
-#    my $url = "url";
-
-    #$name =~ s/,//;
-    #print STDERR $name;
-
+    # Create a file name based on the name.  This should trim out any offending characters
+    # (although if the name is based on an existing shortcut file name, then it should be
+    #  clean anyway).
     my $shortcut_filename = &$create_filename($shortcut_name);
+
+    # Start printing to the output.
+    # Print the header.
     print "Content-Type:$mime_type\n";
     print "Content-Disposition:attachment;filename=\"$shortcut_filename\"\n\n";
+
+    # Print the shortcut file
     binmode(STDOUT);
     &$write_shortcut_handle(\*STDOUT, $shortcut_name, $shortcut_url);
-} else {
-  # Start printing the output xml
-  #print "Content-type: text/xml\n\n";
-  #printf $xmldata;
+} elsif ($archive_type eq "zip") {
+  # Get a temporary folder where we can build the zip file contents
+  # We assume the temporary folder will be deleted automatically
+  # when the script exits.
   my $global_tmp_dir = $ENV{'DOCUMENT_ROOT'} . "/../tmp";
   my $tmp_dir = tempdir( CLEANUP => 1, DIR => $global_tmp_dir );
-#  print STDERR $tmp_dir;
-
   my $zip_contents_dir = $tmp_dir . "/zip";
   mkdir($zip_contents_dir);
 
-#  my $zip = Archive::Zip->new();
-  my $zip = Archive::Tar->new;
+  # Start creating the zip file structure.
+  my $zip = Archive::Zip->new();
+
+  # Go through all of the shortcuts in the XML message.
   foreach my $shortcut_node ($shortcuts_node->getChildNodes()) {
-    my ($shortcut_name, $shortcut_url) = get_shortcut_info($shortcut_node);
+    # Get name and URL for the current shortcut
+    my ($shortcut_name, $shortcut_url) = get_shortcut_node_info($shortcut_node);
+
+    # Create the shortcut file name (this should strip out any dangerous
+    # path separators / and \).
     my $shortcut_filename = &$create_filename($shortcut_name);
 
+    # If the file name already exists append a "(#)" string to it and try
+    # again.  Keep increment the number and trying until we succeed.
     my $counter = 1;
     my $new_shortcut_filename = $shortcut_filename;
     while(-e $zip_contents_dir . '/' . $new_shortcut_filename) {
@@ -137,32 +141,26 @@ if($archive_type eq "none") {
     }
     $shortcut_filename = $new_shortcut_filename;
 
+    # Create the path and then create the shortcut
     my $shortcut_full_filename = $zip_contents_dir . '/' . $shortcut_filename;
     &$write_shortcut_file($shortcut_full_filename, $shortcut_name, $shortcut_url);
-    #$zip->addFile($shortcut_full_filename, 'shortcuts/' . $shortcut_filename);
-    $zip->add_files($shortcut_full_filename);
-    $zip->rename($shortcut_full_filename, 'shortcuts/' . $shortcut_filename);
+
+    # Add the file to the zip file.  Inside the zip file, put it into a "shortcuts" folder.
+    $zip->addFile($shortcut_full_filename, 'shortcuts/' . $shortcut_filename);
   }
 
-#  open(my $uploadfh, ">", "$zip_contents_dir/myfile.txt");
-#  print $uploadfh "Hello World";
-#  close($uploadfh);
+  # Write the zip file
+  my $zip_filename = $tmp_dir . "/shortcuts.zip";
+  unless ( $zip->writeToFileNamed($zip_filename) == AZ_OK ) {
+    die 'Error writing the zip file';
+  }
 
-#  print STDERR "$zip_contents_dir/myfile.txt";
-
-#  my $zip_filename = $tmp_dir . "/download.zip";
-#  unless ( $zip->writeToFileNamed($zip_filename) == AZ_OK ) {
-#    die 'write error';
-#  }
-  my $zip_filename = $tmp_dir . "/download.tar.gz";
-  $zip->write($zip_filename, COMPRESS_GZIP);
-
-  # See http://docstore.mik.ua/orelly/linux/cgi/ch13_02.htm"
+  # Send the zip file to the client
+  # Print the header
   print "Content-Type:application/zip\n";
-#  print "Content-Disposition:attachment;filename=\"shortcuts.zip\"\n\n";
-  print "Content-Disposition:attachment;filename=\"shortcuts.tar.gz\"\n\n";
+  print "Content-Disposition:attachment;filename=\"shortcuts.zip\"\n\n";
 
-
+  # Open the zip file and start sending it
   binmode(STDOUT);
   open my $zip_file,$zip_filename  or die "Cannot open file";
   binmode($zip_file);
@@ -174,6 +172,7 @@ if($archive_type eq "none") {
 }
 
 };
+# Handle errors - just print a simple message in an HTML page.
 if($@) {
   print STDERR "There was an error";
   my $error_message = encode_entities($@);
