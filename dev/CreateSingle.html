@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Web Shortcut Converter</title>
+
+	  <link rel="stylesheet" type="text/css" href="webshortcut.css">
+
+	  <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon192.png" sizes="192x192">
+    
+    <style>
+      fieldset {
+        border: 0;
+      }
+    </style>
+    
+    <script src="jquery.js"></script>
+    <script src="webshortcut.js"></script>
+    <script src="server.js"></script>
+  </head>
+
+  <body>
+  	<header>
+  		<h1>Web Shortcut Tools</h1>
+  		<nav>
+  		  <h3>
+  			<ul>
+  			  <li><a href="index.html">Overview</a></li>
+  				<li><a href="Launcher.html">Launcher</a></li>
+  				<li>Converter</li>
+  			</ul>
+  			</h3>
+  		</nav>
+  	</header>
+
+  <select form="convert">
+    <option value="url">Windows (.url)</option>
+    <option value="desktop">Linux (.desktop)</option>
+    <option value="webloc">Apple (.webloc)</option>
+  </select>
+
+    <!-- Need to fix the drag.  See:
+         http://stackoverflow.com/questions/7110353/html5-dragleave-fired-when-hovering-a-child-element
+         http://stackoverflow.com/questions/10867506/dragleave-of-parent-element-fires-when-dragging-over-children-elements -->
+    <div id="filedrag">
+      <table id="shortcuttable" border="1">
+        <thead>
+          <tr>
+            <th>File Name</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="filetablebody"/>
+      </table>
+    </div>
+    
+    <form id="convert" action="http://abcodeworks.com/cgi/convertshortcut.cgi" method="POST">
+  		<fieldset>
+    		<input id="xmldata" type="hidden" name="xmldata">
+        <button type="submit">Convert Files</button>
+  		</fieldset>
+  	</form>
+
+  	<script>
+      var nextRowID = 1;  	
+  	
+  	  // call initialization file
+      if (window.File && window.FileList && window.FileReader) {
+        Init();
+      }
+  		
+  		function Init() {
+  			var filedrag = $("#filedrag")[0];
+  
+  			// If XMLHttpRequest is available, enable the event listeners and hide the submit button?
+  			var xhr = new XMLHttpRequest();
+  			if (xhr.upload) {	
+  				filedrag.addEventListener("dragover", FileDragHover, false);
+  				filedrag.addEventListener("dragleave", FileDragHover, false);
+  				filedrag.addEventListener("drop", FileSelectHandler, false);
+  				filedrag.style.display = "block";
+  			}
+  			
+  			$( "#convert" ).submit(function( event ) {
+          $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?><note><to>Tove</to></note>");
+        });
+        
+  		}
+  		
+  		// file drag hover
+  		function FileDragHover(e) {
+  			e.stopPropagation();
+  			e.preventDefault();
+  			e.target.className = (e.type == "dragover" ? "hover" : "");
+  		}
+  		
+  		// file selection
+  		function FileSelectHandler(e) {
+  		  // cancel event and hover styling
+  			FileDragHover(e);
+  
+        ProcessDraggedShortcutFiles(
+          e,
+          processResponse,
+          function(data) {
+            alert('An error occurred!');
+          }
+        );
+      }
+      
+      function htmlEncode(value) {
+  		    return $('<div/>').text(value).html();
+  		}
+  
+  		function processResponse(response) {
+        var tablebody = ""
+        
+        $(response).find("shortcut").each(function() {
+          var shortcut = $(this);
+          
+          var filename = shortcut.find("filename");
+          var errormsg = shortcut.find("error");
+          
+          var errorflag = 0;
+          if(errormsg.length) {
+            errorflag = 1;
+          }          
+          
+  				tablebody = tablebody + "<tr error=\"" + errorflag + "\" id=\"" + nextRowID + "\">";
+  				tablebody = tablebody + "<td>" + htmlEncode(filename.text()) + "</td>";
+  				if(errormsg.length) {
+  					tablebody = tablebody + "<td>" + htmlEncode(errormsg.text()) + "</td>";
+  				} else {
+  					var urlElement = shortcut.find("url");
+  					var url = urlElement.text();
+  					tablebody = tablebody + "<td><a href=\"" + htmlEncode(url) + "\">" + htmlEncode(url) + "</a></td>";
+  				}
+  				<!-- http://www.w3schools.com/jsref/met_table_deleterow.asp -->
+  				if(errormsg.length) {
+            tablebody = tablebody + "<td/>";
+  				} else {
+  				  tablebody = tablebody + "<td><a onclick=\"downloadRow(this)\" href=\"#\">Download</a></td>";
+  				}
+  				tablebody = tablebody + "<td><a onclick=\"deleteRow(this)\" href=\"#\">Remove</a></td>";
+  				tablebody = tablebody + "</tr>";
+  				
+  				nextRowID++;
+  			});
+          
+        var m = $("#filetablebody")[0];
+  			m.innerHTML = m.innerHTML + tablebody;
+  		}
+  		
+  		function downloadRow(r) {
+        var row = r.parentNode.parentNode;
+        var i = row.rowIndex;
+        
+        var rowid = row.getAttribute("id");         
+        
+        alert(i + " " + rowid);
+  		}
+  		
+  		function deleteRow(r) {
+        var i = r.parentNode.parentNode.rowIndex;
+        document.getElementById("shortcuttable").deleteRow(i);
+  		}
+  	</script>
+  </body>
+
+</html> 

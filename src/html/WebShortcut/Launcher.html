@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Web Shortcut Launcher</title>
+
+    <link rel="stylesheet" type="text/css" href="webshortcut.css">
+
+    <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon192.png" sizes="192x192">
+    
+    <style>
+      #filedrag {
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
+        width: 100%;
+        height: 200px;
+      }
+      fieldset {
+        border: 0;
+      }
+    </style>
+
+    <script src="webshortcut.js"></script>
+    <script src="server.js"></script>
+  </head>
+
+  <body>
+  	<header>
+  		<h1>Web Shortcut Tools</h1>
+  		<nav>
+  		  <h3>
+  			<ul>
+  			  <li><a href="index.html">Overview</a></li>
+  				<li>Launcher</li>
+  				<li><a href="Converter.html">Converter</a></li>
+  			</ul>
+  			</h3>
+  		</nav>
+  	</header>
+  
+  	<div id="options" class="option_box">
+  	  <input id="nolaunch" type="checkbox" name="nolaunch">Do not launch shortcut (only show URL)</input>
+    </div>
+  
+  	<div id="filedrag">
+        Drop Files Here</br></br>OR</br></br>
+        <form id="upload_form" action="../cgi/parseshortcut.cgi" method="POST" enctype="multipart/form-data">
+  		    <fieldset>
+            <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
+  
+            <input type="file" id="fileselect" name="shortcuts[]" multiple="multiple" />
+  
+    	      <div id="submitbutton">
+              <button type="submit">Upload Files</button>
+            </div>
+          </fieldset>
+  	    </form>
+  	</div>
+  
+  	<div id="messages"/>
+
+    <script src="jquery.js"></script>
+  	<script>
+  		// Output results
+  		function Output(msg) {
+  			var m = $("#messages")[0];
+  			m.innerHTML = msg;
+  		}
+  		
+      if (window.File && window.FileList && window.FileReader) {
+        Init();
+      }
+  		
+  		function Init() {
+  			// If XMLHttpRequest is available, enable the event listeners and hide the submit button.
+  			// Otherwise the form should work (although somewhat limited)
+  			var xhr = new XMLHttpRequest();
+  			if (xhr.upload) {	
+  			    SetupShortcutUploadBox(
+  			      $("#filedrag"),
+  			      $("#fileselect"),
+  			      processResponse);
+  				
+  			    $("#submitbutton")[0].style.display = "none";
+  			}
+  
+  		}
+  
+  		function processResponse(response) {
+  		  // Build a table to show results.
+  		  // Note that the table is overrident during each upload.
+        var tablebody = ""
+        
+        $(response).find("shortcut").each(function() {
+          var shortcut = $(this);
+        
+  				tablebody = tablebody + "<tr>";
+  				var filename = shortcut.find("filename");
+  				tablebody = tablebody + "<td>" + htmlEncode(filename.text()) + "</td>";
+  				var errormsg = shortcut.find("error");
+  				if(errormsg.length) {
+  					tablebody = tablebody + "<td>" + htmlEncode(errormsg.text()) + "</td>";
+  				} else {
+  					var urlElement = shortcut.find("url");
+  					var url = urlElement.text();
+  					tablebody = tablebody + "<td><a href=\"" + htmlEncode(url) + "\">" + htmlEncode(url) + "</a></td>";
+  					if(!$('#nolaunch').prop('checked')) {
+  					  window.open(url);
+  					}
+  				}
+  				tablebody = tablebody + "</tr>";
+  			});
+  
+        Output(
+          "<h3>Results:</h3><table border=\"1\">" +
+          "<thead><tr><th>File Name</th><th>Result</th></tr></thead>" +
+          "<tbody>" +
+          tablebody +
+          "</tbody>" +
+          "</table>");
+  		}
+
+  	</script>
+  </body>
+</html> 

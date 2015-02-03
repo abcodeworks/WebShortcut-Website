@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Web Shortcut Converter</title>
+
+	  <link rel="stylesheet" type="text/css" href="webshortcut.css">
+
+	  <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon192.png" sizes="192x192">
+    
+    <style>
+      fieldset {
+        border: 0;
+      }
+      #filedrag {
+        min-height:200px;  
+      }
+    </style>
+    
+    <script src="jquery.js"></script>
+    <script src="webshortcut.js"></script>
+  </head>
+
+  <body>
+  	<header>
+  		<h1>Web Shortcut Tools</h1>
+  		<nav>
+  		  <h3>
+  			<ul>
+  			  <li><a href="index.html">Overview</a></li>
+  				<li><a href="Launcher.html">Launcher</a></li>
+  				<li>Converter</li>
+  			</ul>
+  			</h3>
+  		</nav>
+  	</header>
+
+    <form id="convert_form" action="../cgi/createshortcut.cgi" method="POST">
+  		<fieldset>
+        <input id="archive" type="hidden" name="archive_type">
+    		<input id="xmldata" type="hidden" name="xmldata">
+  		</fieldset>
+  	</form>
+
+    <form id="upload_form" action="" method="POST" enctype="multipart/form-data">
+  		<fieldset>
+        <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
+       </fieldset>
+  	</form>
+
+    <div id="instructions" class="option_box">
+      <ol>
+        <li>Upload files by dragging into the box below or:
+          <input type="file" id="fileselect" form="upload_form" name="shortcuts[]" multiple="multiple" />
+        </li>
+        <li>
+          Choose a shortcut type to convert to:
+          <select name="target_shortcut_type" form="convert_form">
+            <option value="url">Windows (.url)</option>
+            <option value="desktop">Linux (.desktop)</option>
+            <option value="webloc">Apple (.webloc)</option>
+          </select>
+        </li>
+        <li>
+          Download individual files (by clicking the link in the table) or download all of them in a ZIP file:
+          <button onclick="SubmitAll()" type="button">Convert All Files</button>
+        </li>
+      </ol>
+    </div>
+
+    <div id="filedrag">
+      <table id="shortcuttable" border="1">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="filetablebody"/>
+      </table>
+    </div>
+
+    <script src="server.js"></script>
+  	<script>
+  	  // Global variables
+  	  // Provides unique row IDs for the file list
+  	  var nextRowID = 1;
+  	  // The behind-the-scenes file list in DOM format
+  	  var xmlfilelist = document.implementation.createDocument(null, "shortcuts", null);
+  	  var xmlfilelistShortcuts = xmlfilelist.documentElement;
+  	
+      if (window.File && window.FileList && window.FileReader) {
+        Init();
+      }
+  		
+      function Init() {
+        $("#convert_form").hide();
+        $("#upload_form").hide();
+    		SetupShortcutUploadBox(
+    		  $("#filedrag"),
+  	      $("#fileselect"),
+  		    processResponse);
+  		  $("#shortcuttable").hide();
+  	  }
+
+      function processResponse(response) {
+        var tablebody = ""
+        
+        // Add the files to the table and to the behind-the-scenes DOM
+        $(response).find("shortcut").each(function() {
+          var shortcut = $(this);
+          
+          shortcutElement = shortcut[0];
+
+
+          thisRowID = nextRowID++;
+
+          var name = shortcut.find("name");
+          var errormsg = shortcut.find("error");
+
+          if(!errormsg.length) {
+              var clonedNode = shortcutElement.cloneNode(true);
+              clonedNode.setAttribute("id", thisRowID);
+              xmlfilelistShortcuts.appendChild(clonedNode);
+          }
+          
+          var errorflag = 0;
+          if(errormsg.length) {
+            errorflag = 1;
+          }          
+            
+          tablebody = tablebody + "<tr error=\"" + errorflag + "\" id=\"" + thisRowID + "\">";
+  				tablebody = tablebody + "<td>" + htmlEncode(name.text()) + "</td>";
+  				if(errormsg.length) {
+  					tablebody = tablebody + "<td>" + htmlEncode(errormsg.text()) + "</td>";
+  				} else {
+  					var urlElement = shortcut.find("url");
+  					var url = urlElement.text();
+  					tablebody = tablebody + "<td><a href=\"" + htmlEncode(url) + "\">" + htmlEncode(url) + "</a></td>";
+  				}
+  				// See http://www.w3schools.com/jsref/met_table_deleterow.asp
+  				if(errormsg.length) {
+            tablebody = tablebody + "<td/>";
+  				} else {
+  				  tablebody = tablebody + "<td><a onclick=\"DownloadRow(this)\" href=\"#\">Download</a></td>";
+  				}
+  				tablebody = tablebody + "<td><a onclick=\"DeleteRow(this)\" href=\"#\">Remove</a></td>";
+  				tablebody = tablebody + "</tr>";
+  			});
+          
+        var m = $("#filetablebody")[0];
+  			m.innerHTML = m.innerHTML + tablebody;
+  			
+  			$("#shortcuttable").show();
+  		}
+  		
+  		function GetShortcutByID(id) {
+
+  		    var element = $(xmlfilelistShortcuts).find("shortcut[id=" + id + "]");
+  		    if(element) {
+  		        return element[0];
+  		    } else {
+  		        return undefined;
+  		    }
+  		}
+
+  		function GetRowID(row) {
+  		    return row.getAttribute("id");  
+  		}
+
+  		function DownloadRow(r) {
+        var row = r.parentNode.parentNode;
+        var rowid = GetRowID(row);  
+        
+        var xmlfile = document.implementation.createDocument(null, "shortcuts", null);
+        var xmlfileShortcuts = xmlfile.documentElement;
+
+        var shortcutElement = GetShortcutByID(rowid);
+        var clonedNode = shortcutElement.cloneNode(true);
+        xmlfileShortcuts.appendChild(clonedNode);
+
+        var xmlstr;
+        if (typeof xmlfile.documentElement !== 'undefined') {
+            xmlstr = new XMLSerializer().serializeToString(xmlfile.documentElement);
+        } else {
+            xmlstr = new XMLSerializer().serializeToString(xmlfile);
+        }
+
+        $( "#archive" ).val("none");
+        $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
+
+        $( "#convert_form" ).submit();
+  		}
+  		
+  		function DeleteRow(r) {
+  		    var row = r.parentNode.parentNode;
+  		    var i = row.rowIndex;
+  		    var rowid = GetRowID(row);
+  		    document.getElementById("shortcuttable").deleteRow(i);
+
+  		    var shortcutElement = GetShortcutByID(rowid);
+  		    if(shortcutElement) {
+  		      xmlfilelistShortcuts.removeChild(shortcutElement);
+  		      if(xmlfilelistShortcuts.childElementCount == 0) {
+              $("#shortcuttable").hide();
+  		      }
+  		    }
+  		}
+
+  		function SubmitAll() {
+        if(xmlfilelistShortcuts.childElementCount == 0) {
+          return;
+        }
+
+  		  // See http://stackoverflow.com/questions/8474808/how-to-remove-the-xml-declaration-from-opera-when-using-xmlserializer
+  		  var xmlstr;
+  		  if (typeof xmlfilelist.documentElement !== 'undefined') {
+  		    xmlstr = new XMLSerializer().serializeToString(xmlfilelist.documentElement);
+  		  } else {
+  		    xmlstr = new XMLSerializer().serializeToString(xmlfilelist);
+  		  }
+
+  		  $( "#archive" ).val("zip");
+  		  $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
+
+		    $( "#convert_form" ).submit();
+  		}
+  	</script>
+  </body>
+
+</html> 
