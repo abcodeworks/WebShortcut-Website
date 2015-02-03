@@ -10,33 +10,35 @@
 		 http://blog.teamtreehouse.com/uploading-files-ajax
 		 -->
  
+    <!-- http://stackoverflow.com/questions/10867506/dragleave-of-parent-element-fires-when-dragging-over-children-elements -->
+
 <html>
   <head>
     <title>Web Shortcut Launcher</title>
 
-	  <link rel="stylesheet" type="text/css" href="webshortcut.css">
+    <link rel="stylesheet" type="text/css" href="webshortcut.css">
 
-	  <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16">
     <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32">
     <link rel="icon" type="image/png" href="favicon192.png" sizes="192x192">
     
     <style>
       #filedrag {
-      	font-weight: bold;
-	      text-align: center;
-	      vertical-align: middle;
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
         line-height: 200px;
-        width: 50%;
-        height: 200px;
+        width: 100%;
+        height: 400px;
       }
       fieldset {
         border: 0;
       }
     </style>
 
-	  <script src="jquery.js"></script>
-	  <script src="webshortcut.js"></script>
-	  <script src="server.js"></script>
+    <script src="jquery.js"></script>
+    <script src="webshortcut.js"></script>
+    <script src="server.js"></script>
   </head>
 
   <body>
@@ -53,24 +55,25 @@
   		</nav>
   	</header>
   
-  	<form id="upload" action="../cgi/parseshortcut.cgi" method="POST" enctype="multipart/form-data">
-  		<fieldset>
-    		<input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
-  
-  			<label for="fileselect">Files to upload:</label>
-  			<input type="file" id="fileselect" name="shortcuts[]" multiple="multiple" />
-  
-    	  <div id="submitbutton">
-          <button type="submit">Upload Files</button>
-        </div>
-  		</fieldset>
-  	</form>
-  	
-  	<div id="options">
+  	<div id="options" class="option_box">
   	  <input id="nolaunch" type="checkbox" name="nolaunch">Do not launch shortcut (only show URL)</input>
     </div>
   
-  	<div id="filedrag">or drop files here</div>
+  	<div id="filedrag">
+      <form id="upload_form" action="../cgi/parseshortcut.cgi" method="POST" enctype="multipart/form-data">
+  		<fieldset>
+          <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
+  
+          <label for="fileselect">Files to upload:</label>
+          <input type="file" id="fileselect" name="shortcuts[]" multiple="multiple" />
+  
+    	  <div id="submitbutton">
+            <button type="submit">Upload Files</button>
+          </div>
+        </fieldset>
+  	  </form>
+      or drop files here
+  	</div>
   
   	<div id="messages"/>
   	
@@ -87,49 +90,18 @@
       }
   		
   		function Init() {
-  			var fileselect = $("#fileselect")[0],
-  				filedrag = $("#filedrag")[0],
-  				submitbutton = $("#submitbutton")[0];
-  
-  			fileselect.addEventListener("change", FileSelectHandler, false);
-  
   			// If XMLHttpRequest is available, enable the event listeners and hide the submit button?
   			var xhr = new XMLHttpRequest();
   			if (xhr.upload) {	
-  				filedrag.addEventListener("dragover", FileDragHover, false);
-  				filedrag.addEventListener("dragleave", FileDragHover, false);
-  				filedrag.addEventListener("drop", FileSelectHandler, false);
-  				filedrag.style.display = "block";
+  			    var fileselect = $("#fileselect"),
+                    filedrag = $("#filedrag"),
+                    submitbutton = $("#submitbutton");
+
+  			    SetupShortcutUploadBox(filedrag, fileselect, processResponse);
   				
-  				submitbutton.style.display = "none";
+  			    submitbutton[0].style.display = "none";
   			}
   
-  		}
-  		
-  		// file drag hover
-  		function FileDragHover(e) {
-  			e.stopPropagation();
-  			e.preventDefault();
-  			e.target.className = (e.type == "dragover" ? "hover" : "");
-  		}
-  		
-  		// file selection
-  		function FileSelectHandler(e) {
-  
-  			// cancel event and hover styling
-  			FileDragHover(e);
-
-        ProcessDraggedShortcutFiles(
-          e,
-          processResponse,
-          function(xhr, ajaxOptions, thrownError) {
-            alert('An error occurred submitting the shortcuts to the server: status=' + xhr.status + ' error=' + thrownError);
-          }
-        );
-      }
-  
-  		function htmlEncode(value) {
-  		    return $('<div/>').text(value).html();
   		}
   
   		function processResponse(response) {

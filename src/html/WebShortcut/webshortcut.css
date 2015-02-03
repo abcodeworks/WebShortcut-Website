@@ -13,7 +13,7 @@ nav ul li {
   margin-right: 25px;
 }
 
-#filedrag {
+div.shortcutupload_box {
 	display: none;
 	padding: 1em 0;
 	margin: 1em 0;
@@ -23,9 +23,22 @@ nav ul li {
 	cursor: default;
 }
 
-#filedrag.hover {
+div.shortcutupload_box.hover {
 	color: #f00;
 	border-color: #f00;
 	border-style: solid;
 	box-shadow: inset 0 3px 4px #888;
+}
+
+div.shortcutupload_box *.inactive {
+    pointer-events: none;
+}
+
+div.option_box {
+	padding: 1em 0;
+	margin: 1em 0;
+	color: #555;
+	border: solid;
+	border-radius: 7px;
+	cursor: default;
 }
