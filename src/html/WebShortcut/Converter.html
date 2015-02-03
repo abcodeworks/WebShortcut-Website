@@ -13,31 +13,9 @@
       fieldset {
         border: 0;
       }
-      //html, body {
-        //height:100%;
-        //width:100%;
-        //min-height:100%;
-      //}
-      //#mainarea
-     // {
-       // display:table;
-        //height:100%;
-        //width:100%;
-        //min-height:100%;
-      //}
-      //div+ div
-//{
- //   background: pink;
-   // height:100%;  
-//}
-//#options
-//{
-    //display:table-row;
-//}
-#filedrag
-{
-    min-height:200px;  
-}
+      #filedrag {
+        min-height:200px;  
+      }
     </style>
     
     <script src="jquery.js"></script>
@@ -60,7 +38,7 @@
 
     <form id="convert_form" action="../cgi/createshortcut.cgi" method="POST">
   		<fieldset>
-            <input id="archive" type="hidden" name="archive_type">
+        <input id="archive" type="hidden" name="archive_type">
     		<input id="xmldata" type="hidden" name="xmldata">
   		</fieldset>
   	</form>
@@ -68,53 +46,50 @@
     <form id="upload_form" action="" method="POST" enctype="multipart/form-data">
   		<fieldset>
         <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
-        
        </fieldset>
   	</form>
 
-      <div id="instructions" class="option_box">
-        <ol>
-          <li>Upload files by dragging into the box below or:
-            <!--label for="fileselect">Files to upload:</label-->
-            <input type="file" id="fileselect" form="upload_form" name="shortcuts[]" multiple="multiple" />
-          </li>
-          <li>
-            Choose a shortcut type to convert to:
-            <select name="target_shortcut_type" form="convert_form">
-              <option value="url">Windows (.url)</option>
-              <option value="desktop">Linux (.desktop)</option>
-              <option value="webloc">Apple (.webloc)</option>
-            </select>
-          </li>
-          <li>
-            Download individual files (by clicking the link in the table) or:
-            <button onclick="SubmitAll()" type="button">Convert All Files</button>
-          </li>
-        </ol>
-      </div>
+    <div id="instructions" class="option_box">
+      <ol>
+        <li>Upload files by dragging into the box below or:
+          <input type="file" id="fileselect" form="upload_form" name="shortcuts[]" multiple="multiple" />
+        </li>
+        <li>
+          Choose a shortcut type to convert to:
+          <select name="target_shortcut_type" form="convert_form">
+            <option value="url">Windows (.url)</option>
+            <option value="desktop">Linux (.desktop)</option>
+            <option value="webloc">Apple (.webloc)</option>
+          </select>
+        </li>
+        <li>
+          Download individual files (by clicking the link in the table) or download all of them in a ZIP file:
+          <button onclick="SubmitAll()" type="button">Convert All Files</button>
+        </li>
+      </ol>
+    </div>
 
-      <!-- Need to fix the drag.  See:
-           http://stackoverflow.com/questions/7110353/html5-dragleave-fired-when-hovering-a-child-element
-           http://stackoverflow.com/questions/10867506/dragleave-of-parent-element-fires-when-dragging-over-children-elements -->
-      <div id="filedrag">
-        <table id="shortcuttable" border="1">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Result</th>
-            </tr>
-          </thead>
-          <tbody id="filetablebody"/>
-        </table>
-      </div>
+    <div id="filedrag">
+      <table id="shortcuttable" border="1">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="filetablebody"/>
+      </table>
+    </div>
 
     <script src="server.js"></script>
   	<script>
+  	  // Global variables
+  	  // Provides unique row IDs for the file list
   	  var nextRowID = 1;
+  	  // The behind-the-scenes file list in DOM format
   	  var xmlfilelist = document.implementation.createDocument(null, "shortcuts", null);
   	  var xmlfilelistShortcuts = xmlfilelist.documentElement;
   	
-  	  // call initialization file
       if (window.File && window.FileList && window.FileReader) {
         Init();
       }
@@ -132,6 +107,7 @@
       function processResponse(response) {
         var tablebody = ""
         
+        // Add the files to the table and to the behind-the-scenes DOM
         $(response).find("shortcut").each(function() {
           var shortcut = $(this);
           
@@ -141,10 +117,6 @@
           thisRowID = nextRowID++;
 
           var name = shortcut.find("name");
-          //var filenameStr = filename.text();    
-          //var basenameStr = basename(filenameStr);
-          //filename.text(basenameStr);
-          
           var errormsg = shortcut.find("error");
 
           if(!errormsg.length) {
@@ -167,13 +139,13 @@
   					var url = urlElement.text();
   					tablebody = tablebody + "<td><a href=\"" + htmlEncode(url) + "\">" + htmlEncode(url) + "</a></td>";
   				}
-  				<!-- http://www.w3schools.com/jsref/met_table_deleterow.asp -->
+  				// See http://www.w3schools.com/jsref/met_table_deleterow.asp
   				if(errormsg.length) {
             tablebody = tablebody + "<td/>";
   				} else {
-  				  tablebody = tablebody + "<td><a onclick=\"downloadRow(this)\" href=\"#\">Download</a></td>";
+  				  tablebody = tablebody + "<td><a onclick=\"DownloadRow(this)\" href=\"#\">Download</a></td>";
   				}
-  				tablebody = tablebody + "<td><a onclick=\"deleteRow(this)\" href=\"#\">Remove</a></td>";
+  				tablebody = tablebody + "<td><a onclick=\"DeleteRow(this)\" href=\"#\">Remove</a></td>";
   				tablebody = tablebody + "</tr>";
   			});
           
@@ -197,9 +169,8 @@
   		    return row.getAttribute("id");  
   		}
 
-  		function downloadRow(r) {
+  		function DownloadRow(r) {
         var row = r.parentNode.parentNode;
-        //var i = row.rowIndex;
         var rowid = GetRowID(row);  
         
         var xmlfile = document.implementation.createDocument(null, "shortcuts", null);
@@ -220,10 +191,9 @@
         $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
 
         $( "#convert_form" ).submit();
-        //alert(i + " " + rowid);
   		}
   		
-  		function deleteRow(r) {
+  		function DeleteRow(r) {
   		    var row = r.parentNode.parentNode;
   		    var i = row.rowIndex;
   		    var rowid = GetRowID(row);
@@ -231,34 +201,30 @@
 
   		    var shortcutElement = GetShortcutByID(rowid);
   		    if(shortcutElement) {
-  		        xmlfilelistShortcuts.removeChild(shortcutElement);
-  		        if(xmlfilelistShortcuts.childElementCount == 0) {
-                $("#shortcuttable").hide();
-  		        }
+  		      xmlfilelistShortcuts.removeChild(shortcutElement);
+  		      if(xmlfilelistShortcuts.childElementCount == 0) {
+              $("#shortcuttable").hide();
+  		      }
   		    }
   		}
 
   		function SubmitAll() {
-  		    //event.preventDefault();
-  		    //$( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?><note><to>Tove</to></note>");
-  		    //var xmlstr = new XMLSerializer().serializeToString(xmlfilelist);
-  		    // See http://stackoverflow.com/questions/8474808/how-to-remove-the-xml-declaration-from-opera-when-using-xmlserializer
+        if(xmlfilelistShortcuts.childElementCount == 0) {
+          return;
+        }
 
-          if(xmlfilelistShortcuts.childElementCount == 0) {
-            return;
-          }
+  		  // See http://stackoverflow.com/questions/8474808/how-to-remove-the-xml-declaration-from-opera-when-using-xmlserializer
+  		  var xmlstr;
+  		  if (typeof xmlfilelist.documentElement !== 'undefined') {
+  		    xmlstr = new XMLSerializer().serializeToString(xmlfilelist.documentElement);
+  		  } else {
+  		    xmlstr = new XMLSerializer().serializeToString(xmlfilelist);
+  		  }
 
-  		    var xmlstr;
-  		    if (typeof xmlfilelist.documentElement !== 'undefined') {
-  		        xmlstr = new XMLSerializer().serializeToString(xmlfilelist.documentElement);
-  		    } else {
-  		        xmlstr = new XMLSerializer().serializeToString(xmlfilelist);
-  		    }
+  		  $( "#archive" ).val("zip");
+  		  $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
 
-  		    $( "#archive" ).val("zip");
-  		    $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
-
-  		    $( "#convert_form" ).submit();
+		    $( "#convert_form" ).submit();
   		}
   	</script>
   </body>

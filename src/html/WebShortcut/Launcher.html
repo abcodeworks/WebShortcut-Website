@@ -1,17 +1,4 @@
 <!DOCTYPE html>
-<!-- The contact and back icons were downloaded from iconfinder.
-     They are from the "Pictype Free Vector Icons" set created by Timothy Miller under
-	 the Creative Commons (Attribution-Share Alike 3.0 Unported) license.
-	 The URL is https://www.iconfinder.com/iconsets/pictype-free-vector-icons
--->
-
-    <!-- http://filedropjs.org/demo/ 
-	     http://www.sitepoint.com/html5-file-drag-and-drop/
-		 http://blog.teamtreehouse.com/uploading-files-ajax
-		 -->
- 
-    <!-- http://stackoverflow.com/questions/10867506/dragleave-of-parent-element-fires-when-dragging-over-children-elements -->
-
 <html>
   <head>
     <title>Web Shortcut Launcher</title>
@@ -27,7 +14,6 @@
         font-weight: bold;
         text-align: center;
         vertical-align: middle;
-        /*line-height: 200px;*/
         width: 100%;
         height: 200px;
       }
@@ -36,7 +22,6 @@
       }
     </style>
 
-    <script src="jquery.js"></script>
     <script src="webshortcut.js"></script>
     <script src="server.js"></script>
   </head>
@@ -65,7 +50,6 @@
   		    <fieldset>
             <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
   
-            <!--label for="fileselect">Files to upload:</label-->
             <input type="file" id="fileselect" name="shortcuts[]" multiple="multiple" />
   
     	      <div id="submitbutton">
@@ -76,21 +60,22 @@
   	</div>
   
   	<div id="messages"/>
-  	
+
+    <script src="jquery.js"></script>
   	<script>
-  		// output information
+  		// Output results
   		function Output(msg) {
   			var m = $("#messages")[0];
   			m.innerHTML = msg;
   		}
   		
-  		// call initialization file
       if (window.File && window.FileList && window.FileReader) {
         Init();
       }
   		
   		function Init() {
-  			// If XMLHttpRequest is available, enable the event listeners and hide the submit button?
+  			// If XMLHttpRequest is available, enable the event listeners and hide the submit button.
+  			// Otherwise the form should work (although somewhat limited)
   			var xhr = new XMLHttpRequest();
   			if (xhr.upload) {	
   			    SetupShortcutUploadBox(
@@ -104,6 +89,8 @@
   		}
   
   		function processResponse(response) {
+  		  // Build a table to show results.
+  		  // Note that the table is overrident during each upload.
         var tablebody = ""
         
         $(response).find("shortcut").each(function() {
@@ -136,7 +123,5 @@
   		}
 
   	</script>
-
   </body>
-
 </html> 

@@ -1,17 +1,9 @@
-var upload_form = $("#upload_form")
-if(upload_form) {
-    upload_form.attr("action", GetParseShortcutUrl());
-}
-
-var convert_form = $("#convert_form")
-if(convert_form) {
-    convert_form.attr("action", GetCreateShortcutUrl());
-}
-
+// Get URLs.  These are in a separate script so that they
+// can be overriden during development and debugging.
 function GetParseShortcutUrl() {
-  return 'http://abcodeworks.com/cgi/parseshortcut.cgi';
+  return '../cgi/parseshortcut.cgi';
 }
 
 function GetCreateShortcutUrl() {
-  return 'http://abcodeworks.com/cgi/createshortcut.cgi';
+  return '../cgi/createshortcut.cgi';
 }
