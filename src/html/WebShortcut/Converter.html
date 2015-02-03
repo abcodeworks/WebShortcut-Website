@@ -13,29 +13,35 @@
       fieldset {
         border: 0;
       }
-    //    html, body {
-    //        min-height:100%;
-    //    }
-     // #mainarea
+      //html, body {
+        //height:100%;
+        //width:100%;
+        //min-height:100%;
+      //}
+      //#mainarea
+     // {
+       // display:table;
+        //height:100%;
+        //width:100%;
+        //min-height:100%;
+      //}
+      //div+ div
 //{
-  //  display:table;
-  //  height:100%;
-  ///  width:100%;
+ //   background: pink;
+   // height:100%;  
 //}
 //#options
 //{
     //display:table-row;
 //}
-//#filedrag
-//{
-//    display:table-row;
-    //height:100%;  
-//}
+#filedrag
+{
+    min-height:200px;  
+}
     </style>
     
     <script src="jquery.js"></script>
     <script src="webshortcut.js"></script>
-    <script src="server.js"></script>
   </head>
 
   <body>
@@ -52,24 +58,39 @@
   		</nav>
   	</header>
 
-    <form id="convert" action="http://abcodeworks.com/cgi/createshortcut.cgi" method="POST">
+    <form id="convert_form" action="../cgi/createshortcut.cgi" method="POST">
   		<fieldset>
             <input id="archive" type="hidden" name="archive_type">
     		<input id="xmldata" type="hidden" name="xmldata">
   		</fieldset>
   	</form>
 
-    <div id="mainarea">
-      <div id="options" class="option_box">
-        <select name="target_shortcut_type" form="convert">
-          <option value="url">Windows (.url)</option>
-          <option value="desktop">Linux (.desktop)</option>
-          <option value="webloc">Apple (.webloc)</option>
-        </select>
-        <button onclick="submitall()" type="button">Convert All Files</button>
-      </div>
-      <div id="fileselect" class="option_box">
+    <form id="upload_form" action="" method="POST" enctype="multipart/form-data">
+  		<fieldset>
+        <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
+        
+       </fieldset>
+  	</form>
 
+      <div id="instructions" class="option_box">
+        <ol>
+          <li>Upload files by dragging into the box below or:
+            <!--label for="fileselect">Files to upload:</label-->
+            <input type="file" id="fileselect" form="upload_form" name="shortcuts[]" multiple="multiple" />
+          </li>
+          <li>
+            Choose a shortcut type to convert to:
+            <select name="target_shortcut_type" form="convert_form">
+              <option value="url">Windows (.url)</option>
+              <option value="desktop">Linux (.desktop)</option>
+              <option value="webloc">Apple (.webloc)</option>
+            </select>
+          </li>
+          <li>
+            Download individual files (by clicking the link in the table) or:
+            <button onclick="SubmitAll()" type="button">Convert All Files</button>
+          </li>
+        </ol>
       </div>
 
       <!-- Need to fix the drag.  See:
@@ -86,8 +107,8 @@
           <tbody id="filetablebody"/>
         </table>
       </div>
-    </div>
 
+    <script src="server.js"></script>
   	<script>
   	  var nextRowID = 1;
   	  var xmlfilelist = document.implementation.createDocument(null, "shortcuts", null);
@@ -99,10 +120,13 @@
       }
   		
       function Init() {
-  		var filedrag = $("#filedrag");
-  
-  		// If XMLHttpRequest is available, enable the event listeners and hide the submit button?
-  		SetupShortcutUploadBox(filedrag, ???, processResponse
+        $("#convert_form").hide();
+        $("#upload_form").hide();
+    		SetupShortcutUploadBox(
+    		  $("#filedrag"),
+  	      $("#fileselect"),
+  		    processResponse);
+  		  $("#shortcuttable").hide();
   	  }
 
       function processResponse(response) {
@@ -155,6 +179,8 @@
           
         var m = $("#filetablebody")[0];
   			m.innerHTML = m.innerHTML + tablebody;
+  			
+  			$("#shortcuttable").show();
   		}
   		
   		function GetShortcutByID(id) {
@@ -193,7 +219,7 @@
         $( "#archive" ).val("none");
         $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
 
-        $( "#convert" ).submit();
+        $( "#convert_form" ).submit();
         //alert(i + " " + rowid);
   		}
   		
@@ -206,14 +232,21 @@
   		    var shortcutElement = GetShortcutByID(rowid);
   		    if(shortcutElement) {
   		        xmlfilelistShortcuts.removeChild(shortcutElement);
+  		        if(xmlfilelistShortcuts.childElementCount == 0) {
+                $("#shortcuttable").hide();
+  		        }
   		    }
   		}
 
-  		function submitall() {
+  		function SubmitAll() {
   		    //event.preventDefault();
   		    //$( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?><note><to>Tove</to></note>");
   		    //var xmlstr = new XMLSerializer().serializeToString(xmlfilelist);
   		    // See http://stackoverflow.com/questions/8474808/how-to-remove-the-xml-declaration-from-opera-when-using-xmlserializer
+
+          if(xmlfilelistShortcuts.childElementCount == 0) {
+            return;
+          }
 
   		    var xmlstr;
   		    if (typeof xmlfilelist.documentElement !== 'undefined') {
@@ -225,7 +258,7 @@
   		    $( "#archive" ).val("zip");
   		    $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
 
-  		    $( "#convert" ).submit();
+  		    $( "#convert_form" ).submit();
   		}
   	</script>
   </body>

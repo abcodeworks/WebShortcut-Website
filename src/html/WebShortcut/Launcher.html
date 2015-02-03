@@ -27,9 +27,9 @@
         font-weight: bold;
         text-align: center;
         vertical-align: middle;
-        line-height: 200px;
+        /*line-height: 200px;*/
         width: 100%;
-        height: 400px;
+        height: 200px;
       }
       fieldset {
         border: 0;
@@ -60,19 +60,19 @@
     </div>
   
   	<div id="filedrag">
-      <form id="upload_form" action="../cgi/parseshortcut.cgi" method="POST" enctype="multipart/form-data">
-  		<fieldset>
-          <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
+        Drop Files Here</br></br>OR</br></br>
+        <form id="upload_form" action="../cgi/parseshortcut.cgi" method="POST" enctype="multipart/form-data">
+  		    <fieldset>
+            <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
   
-          <label for="fileselect">Files to upload:</label>
-          <input type="file" id="fileselect" name="shortcuts[]" multiple="multiple" />
+            <!--label for="fileselect">Files to upload:</label-->
+            <input type="file" id="fileselect" name="shortcuts[]" multiple="multiple" />
   
-    	  <div id="submitbutton">
-            <button type="submit">Upload Files</button>
-          </div>
-        </fieldset>
-  	  </form>
-      or drop files here
+    	      <div id="submitbutton">
+              <button type="submit">Upload Files</button>
+            </div>
+          </fieldset>
+  	    </form>
   	</div>
   
   	<div id="messages"/>
@@ -93,13 +93,12 @@
   			// If XMLHttpRequest is available, enable the event listeners and hide the submit button?
   			var xhr = new XMLHttpRequest();
   			if (xhr.upload) {	
-  			    var fileselect = $("#fileselect"),
-                    filedrag = $("#filedrag"),
-                    submitbutton = $("#submitbutton");
-
-  			    SetupShortcutUploadBox(filedrag, fileselect, processResponse);
+  			    SetupShortcutUploadBox(
+  			      $("#filedrag"),
+  			      $("#fileselect"),
+  			      processResponse);
   				
-  			    submitbutton[0].style.display = "none";
+  			    $("#submitbutton")[0].style.display = "none";
   			}
   
   		}

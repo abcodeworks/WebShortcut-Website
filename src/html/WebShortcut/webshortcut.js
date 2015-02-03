@@ -1,3 +1,5 @@
+const maxFileSizeKb = 100;
+
 function GetFileExtension(filename) {
   var a = filename.split(".");
   if( a.length === 1 || ( a[0] === "" && a.length === 2 ) ) {
@@ -10,17 +12,22 @@ function htmlEncode(value) {
     return $('<div/>').text(value).html();
 }
 
-function SetupShortcutUploadBox(div, form, handler) {
-    form[0].addEventListener("change", FileSelectHandler, false);
+function SetupShortcutUploadBox(div, b, handler) {
+    var handler_func = function (e) {
+        FileSelectHandler(e, handler);
+      }
+  
+    b[0].addEventListener(
+      "change",
+      handler_func,
+      false);
 
     div.addClass("shortcutupload_box");
     div[0].addEventListener("dragover", FileDragOver, false);
     div[0].addEventListener("dragleave", FileDragLeave, false);
     div[0].addEventListener(
       "drop",
-      function (e) {
-        FileSelectHandler(e, handler);
-      },
+      handler_func,
       false);
     div[0].style.display = "block";
 }
@@ -51,14 +58,11 @@ function FileSelectHandler(e, successHandler) {
 
     UploadDraggedShortcutFiles(
       e,
-      successHandler,
-      function (xhr, ajaxOptions, thrownError) {
-          alert('An error occurred submitting the shortcuts to the server: status=' + xhr.status + ' error=' + thrownError);
-      }
+      successHandler
     );
 }
 
-function UploadDraggedShortcutFiles(e, successFunction, failFunction) {
+function UploadDraggedShortcutFiles(e, successFunction) {
 	// fetch FileList object
 	var files = e.target.files || e.dataTransfer.files;
 
@@ -66,7 +70,9 @@ function UploadDraggedShortcutFiles(e, successFunction, failFunction) {
 	var formData = new FormData();
 	
 	// Loop through each of the selected files.
-	var count = 0, skipCount = 0;
+	var count = 0;
+	var badExtensionCount = 0;
+	var tooBigCount = 0;
 	for (var i = 0; i < files.length; i++) {
 	  var file = files[i];
 
@@ -76,7 +82,11 @@ function UploadDraggedShortcutFiles(e, successFunction, failFunction) {
 	      fileExtension != 'website' &&
 	      fileExtension != 'desktop' &&
 	      fileExtension != 'webloc') {
-	    skipCount++;
+	    badExtensionCount++;
+	    continue;
+	  }
+	  if(file.size > (maxFileSizeKb * 1024)) {
+	    tooBigCount++;
 	    continue;
 	  }
 
@@ -85,10 +95,12 @@ function UploadDraggedShortcutFiles(e, successFunction, failFunction) {
 	  count++;
 	}
 
-    // ADD CHECK FOR FILE SIZE
-
-  if(skipCount > 0) {
+  if(badExtensionCount > 0) {
     window.alert("Some files did not have a valid extension and are being ignored");
+  }
+  
+  if(tooBigCount > 0) {
+    window.alert("Some files were larger than the maximum size of " + maxFileSizeKb + " kb and are being ignored");
   }
  
   if(count == 0) {
@@ -103,6 +115,8 @@ function UploadDraggedShortcutFiles(e, successFunction, failFunction) {
     processData: false,
     type: 'POST',
     success: successFunction,
-    error: failFunction
+    error: function (xhr, ajaxOptions, thrownError) {
+          alert('An error occurred submitting the shortcuts to the server: status=' + xhr.status + ' error=' + thrownError);
+      }
   });
 }
