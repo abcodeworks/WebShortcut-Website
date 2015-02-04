@@ -78,7 +78,7 @@ function FileSelectHandler(e, successHandler) {
     );
 }
 
-const maxFileSizeKb = 100;
+var maxFileSizeKb = 100;
 
 // Check the files, upload, and get the response
 function UploadDraggedShortcutFiles(e, successFunction) {
