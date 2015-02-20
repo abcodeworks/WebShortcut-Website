@@ -39,6 +39,7 @@
     <form id="convert_form" action="cgi/createshortcut.cgi" method="POST">
   		<fieldset>
         <input id="archive" type="hidden" name="archive_type">
+        <input id="target_shortcut_type_hidden" type="hidden" name="target_shortcut_type">
     		<input id="xmldata" type="hidden" name="xmldata">
   		</fieldset>
   	</form>
@@ -56,7 +57,7 @@
         </li>
         <li>
           Choose a shortcut type to convert to:
-          <select name="target_shortcut_type" form="convert_form">
+          <select id="target_shortcut_type" name="target_shortcut_type">
             <option value="url">Windows (.url)</option>
             <option value="desktop">Linux (.desktop)</option>
             <option value="webloc">Apple (.webloc)</option>
@@ -189,6 +190,7 @@
 
         $( "#archive" ).val("none");
         $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
+        $( "#target_shortcut_type_hidden" ).val( $("#target_shortcut_type").val() );
 
         $( "#convert_form" ).submit();
   		}
@@ -223,6 +225,7 @@
 
   		  $( "#archive" ).val("zip");
   		  $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
+        $( "#target_shortcut_type_hidden" ).val( $("#target_shortcut_type").val() );
 
 		    $( "#convert_form" ).submit();
   		}
