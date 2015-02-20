@@ -4,7 +4,7 @@ use 5.006_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 use Carp;
 use File::Basename;
@@ -148,6 +148,7 @@ sub _create_filename {
 
     # The valid characters are listed below in ASCII order.
     # Essentially this means we are excluding: "%*/<>?\^| (along with any control characters)
+    # Note that Unicode characters are allowed in the file name.
     my $clean_name = $name;
     $clean_name =~ s/[^ !#\$&'\(\)+,\-\.,0-9;=\@A-Z\[\]_`a-z\{\}~\x{0080}-\x{FFFF}]//g;
 
@@ -289,15 +290,23 @@ sub write_desktop_shortcut_handle {
 sub write_url_shortcut_handle {
     my ( $handle, $name, $url ) = @_;
  
-    if(is_utf8($url)) {
+    my $ascii_url = $url;
+    # Generate a URL where non-ASCII characters are placed with a question mark
+    $ascii_url =~ s/[x{0080}-\x{FFFF}]/?/g;
+
+    print $handle "[InternetShortcut]\r\n";
+    print $handle "URL=${ascii_url}\r\n";
+ 
+    # If the url contains non-ascii characters, print the extra sections 
+    if($url ne $ascii_url) {
+        print $handle "[InternetShortcut.A]\r\n";
+        print $handle "URL=${ascii_url}\r\n";
+
         print $handle "[InternetShortcut.W]\r\n";
         my $url_utf7 = encode("UTF-7", $url);
         print $handle "URL=${url_utf7}\r\n";      
-    } else {
-        print $handle "[InternetShortcut]\r\n";
-        print $handle "URL=${url}\r\n";
     }
-    
+
     close ($handle);
     
     return 1;
