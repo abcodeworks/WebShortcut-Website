@@ -55,11 +55,12 @@ $writer->startTag("shortcuts");
 
 # Go through each uploaded file, parse, and output results
 foreach my $shortcut_file (@shortcut_files) {
-  my $decoded_shortcut_file = decode(utf8=>$shortcut_file);
-  my $name = get_shortcut_name_from_filename($decoded_shortcut_file);
+  my $ascii_shortcut_file = $shortcut_file;
+  $ascii_shortcut_file =~ s/[x{0080}-\x{FFFF}]/_/g;
+  my $name = get_shortcut_name_from_filename($ascii_shortcut_file);
 
   $writer->startTag("shortcut");
-  $writer->dataElement("filename", $decoded_shortcut_file);
+  $writer->dataElement("filename", $ascii_shortcut_file);
   $writer->dataElement("name", $name);
 
   # Try parsing the file - if the routine dies, put the error
