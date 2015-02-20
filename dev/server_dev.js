@@ -10,9 +10,9 @@ if(convert_form) {
 }
 
 function GetParseShortcutUrl() {
-  return 'http://abcodeworks.com/cgi/parseshortcut.cgi';
+  return 'http://abcodeworks.com/WebShortcut/test/cgi/parseshortcut.cgi';
 }
 
 function GetCreateShortcutUrl() {
-  return 'http://abcodeworks.com/cgi/createshortcut.cgi';
+  return 'http://abcodeworks.com/WebShortcut/test/cgi/createshortcut.cgi';
 }
