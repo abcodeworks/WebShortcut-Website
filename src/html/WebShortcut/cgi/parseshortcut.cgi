@@ -2,6 +2,8 @@
 
 # Reference: http://www.sitepoint.com/uploading-files-cgi-perl/
 
+use utf8;
+
 use lib 'lib';
 
 use Encode;

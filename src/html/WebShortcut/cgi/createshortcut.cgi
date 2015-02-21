@@ -4,6 +4,8 @@
 
 use constant BUFFER_SIZE => 4096;
 
+use utf8;
+
 use lib 'lib';
 
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
