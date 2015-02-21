@@ -47,6 +47,7 @@ $CGI::POST_MAX = 1024 * $upload_limit_kb;
 
 my $query = CGI->new();
 
+my $remove_unicode_from_filename = $query->param("remove_unicode_from_filename");
 my @shortcut_files = $query->upload("shortcuts[]");
 
 # Start printing the output xml
@@ -57,12 +58,16 @@ $writer->startTag("shortcuts");
 
 # Go through each uploaded file, parse, and output results
 foreach my $shortcut_file (@shortcut_files) {
-  my $ascii_shortcut_file = $shortcut_file;
-  $ascii_shortcut_file =~ s/[x{0080}-\x{FFFF}]/_/g;
-  my $name = get_shortcut_name_from_filename($ascii_shortcut_file);
-
   $writer->startTag("shortcut");
-  $writer->dataElement("filename", $ascii_shortcut_file);
+
+  my $shortcut_filename = decode(utf8=>$shortcut_file);
+  if($remove_unicode_from_filename eq "yes") {
+    $shortcut_filename =~ s/[x{0080}-\x{FFFF}]/_/g;
+  }
+  $shortcut_filename = $shortcut_filename . $remove_unicode_from_filename;
+  $writer->dataElement("filename", $shortcut_filename);
+
+  my $name = get_shortcut_name_from_filename($shortcut_filename);
   $writer->dataElement("name", $name);
 
   # Try parsing the file - if the routine dies, put the error

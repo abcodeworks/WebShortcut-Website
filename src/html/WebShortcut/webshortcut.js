@@ -23,9 +23,9 @@ function htmlEncode(value) {
 // to an upload form (used as an alternative to dragging)
 // When shortcuts are uploaded,
 // the handler is called with the results.
-function SetupShortcutUploadBox(div, button, handler) {
+function SetupShortcutUploadBox(div, button, addfieldfunc, handler) {
   var handler_func = function (e) {
-      FileSelectHandler(e, handler);
+      FileSelectHandler(e, addfieldfunc, handler);
     }
   
   button[0].addEventListener(
@@ -67,13 +67,14 @@ function FileDragLeave(e) {
 }
 
 // Handler when a file is selected or a file is dropped
-function FileSelectHandler(e, successHandler) {
+function FileSelectHandler(e, addfieldfunc, successHandler) {
 
     // cancel event and hover styling
     FileDragLeave(e);
 
     UploadDraggedShortcutFiles(
       e,
+      addfieldfunc,
       successHandler
     );
 }
@@ -81,37 +82,41 @@ function FileSelectHandler(e, successHandler) {
 var maxFileSizeKb = 100;
 
 // Check the files, upload, and get the response
-function UploadDraggedShortcutFiles(e, successFunction) {
-	var files = e.target.files || e.dataTransfer.files;
+function UploadDraggedShortcutFiles(e, addfieldfunc, successFunction) {
+  var files = e.target.files || e.dataTransfer.files;
 
-	var formData = new FormData();
-	
-	// Loop through each of the selected files.
-	var count = 0;
-	var badExtensionCount = 0;
-	var tooBigCount = 0;
-	for (var i = 0; i < files.length; i++) {
-	  var file = files[i];
+  var formData = new FormData();
+  
+  if(addfieldfunc) {
+    addfieldfunc(formData);
+  }
 
-	  // Check the files for problems
-	  var fileExtension = GetFileExtension(file.name);
-	  if (fileExtension != 'url' &&
-	      fileExtension != 'website' &&
-	      fileExtension != 'desktop' &&
-	      fileExtension != 'webloc') {
-	    badExtensionCount++;
-	    continue;
-	  }
-	  if(file.size > (maxFileSizeKb * 1024)) {
-	    tooBigCount++;
-	    continue;
-	  }
+  // Loop through each of the selected files.
+  var count = 0;
+  var badExtensionCount = 0;
+  var tooBigCount = 0;
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
 
-	  // Add the file to the request.
-	  formData.append('shortcuts[]', file, file.name);
+    // Check the files for problems
+    var fileExtension = GetFileExtension(file.name);
+    if (fileExtension != 'url' &&
+        fileExtension != 'website' &&
+        fileExtension != 'desktop' &&
+        fileExtension != 'webloc') {
+      badExtensionCount++;
+      continue;
+    }
+    if(file.size > (maxFileSizeKb * 1024)) {
+      tooBigCount++;
+      continue;
+    }
 
-	  count++;
-	}
+    // Add the file to the request.
+    formData.append('shortcuts[]', file, file.name);
+
+    count++;
+  }
 
   if(badExtensionCount > 0) {
     window.alert("Some files did not have a valid extension and are being ignored");

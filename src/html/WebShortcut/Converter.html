@@ -47,13 +47,14 @@
     <form id="upload_form" action="" method="POST" enctype="multipart/form-data">
   		<fieldset>
         <input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="100000" />
-       </fieldset>
+      </fieldset>
   	</form>
 
     <div id="instructions" class="option_box">
       <ol>
         <li>Upload files by dragging into the box below or:
           <input type="file" id="fileselect" form="upload_form" name="shortcuts[]" multiple="multiple" />
+          <input id="remove_unicode_from_filename" type="checkbox">Remove unicode characters from file names</input>
         </li>
         <li>
           Choose a shortcut type to convert to:
@@ -101,6 +102,13 @@
     		SetupShortcutUploadBox(
     		  $("#filedrag"),
   	      $("#fileselect"),
+  	      function (formData) {
+  	        if($('#remove_unicode_from_filename').prop('checked')) {
+  			      formData.append('remove_unicode_from_filename', 'yes');
+  			    } else {
+              formData.append('remove_unicode_from_filename', 'no');
+  			    }
+  	      },
   		    processResponse);
   		  $("#shortcuttable").hide();
   	  }
@@ -170,6 +178,14 @@
   		    return row.getAttribute("id");  
   		}
 
+      function SubmitConvertForm(archive_type, xmlstr) {
+        $( "#archive" ).val(archive_type);
+        $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
+        $( "#target_shortcut_type_hidden" ).val( $("#target_shortcut_type").val() );
+
+        $( "#convert_form" ).submit();
+      }
+
   		function DownloadRow(r) {
         var row = r.parentNode.parentNode;
         var rowid = GetRowID(row);  
@@ -188,11 +204,7 @@
             xmlstr = new XMLSerializer().serializeToString(xmlfile);
         }
 
-        $( "#archive" ).val("none");
-        $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
-        $( "#target_shortcut_type_hidden" ).val( $("#target_shortcut_type").val() );
-
-        $( "#convert_form" ).submit();
+        SubmitConvertForm("none", xmlstr);
   		}
   		
   		function DeleteRow(r) {
@@ -223,11 +235,7 @@
   		    xmlstr = new XMLSerializer().serializeToString(xmlfilelist);
   		  }
 
-  		  $( "#archive" ).val("zip");
-  		  $( "#xmldata" ).val("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xmlstr);
-        $( "#target_shortcut_type_hidden" ).val( $("#target_shortcut_type").val() );
-
-		    $( "#convert_form" ).submit();
+  		  SubmitConvertForm("zip", xmlstr);
   		}
   	</script>
   </body>

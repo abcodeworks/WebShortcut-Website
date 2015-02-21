@@ -65,6 +65,17 @@ sub get_shortcut_node_info {
   return ($name, $url);
 }
 
+sub get_shortcut_filename {
+  my ($shortcut_name, $create_filename) = @_;
+
+  # Create the shortcut file name (this should strip out any dangerous
+  # path separators / and \).
+  my $shortcut_filename = &$create_filename($shortcut_name);
+  # Remove unicode characters
+  $shortcut_filename =~ s/[x{0080}-\x{FFFF}]/_/g;
+
+  return $shortcut_filename;
+}
 
 # Print a message to the error log.  It seems like if we die,
 # no message will be printed if we do not print this line first???
@@ -129,19 +140,15 @@ if($archive_type eq "none") {
     # Get name and URL for the current shortcut
     my ($shortcut_name, $shortcut_url) = get_shortcut_node_info($shortcut_node);
 
-    # Create the shortcut file name (this should strip out any dangerous
-    # path separators / and \).
-    my $shortcut_filename = &$create_filename($shortcut_name);
+    my $shortcut_filename = get_shortcut_filename($shortcut_name, $create_filename);
 
     # If the file name already exists append a "(#)" string to it and try
     # again.  Keep increment the number and trying until we succeed.
     my $counter = 1;
-    my $new_shortcut_filename = $shortcut_filename;
-    while(-e $zip_contents_dir . '/' . $new_shortcut_filename) {
-      $new_shortcut_filename = $shortcut_filename . " ($counter)";
+    while(-e $zip_contents_dir . '/' . $shortcut_filename) {
+      $shortcut_filename = get_shortcut_filename($shortcut_name . " ($counter)", $create_filename);
       $counter = $counter + 1;
     }
-    $shortcut_filename = $new_shortcut_filename;
 
     # Create the path and then create the shortcut
     my $shortcut_full_filename = $zip_contents_dir . '/' . $shortcut_filename;
